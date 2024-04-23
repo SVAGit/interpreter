@@ -25,9 +25,18 @@ std::vector<Token> Lexer::tokenize() {
 		} else if (input[offset] == ')') {
 			offset++;
 			tokens.push_back(Token{TokenType::RPAREN, ")"});
+		} else if (input[offset] == '{') {
+			offset++;
+			tokens.push_back(Token{TokenType::LBRACE, "("});
+		} else if (input[offset] == '}') {
+			offset++;
+			tokens.push_back(Token{TokenType::RBRACE, ")"});
 		} else if (input[offset] == ',') {
 			offset++;
 			tokens.push_back(Token{TokenType::COMMA, ","});
+		} else if (input[offset] == ';') {
+			offset++;
+			tokens.push_back(Token{TokenType::SEMICOLON, ","});
 		} else {
 			throw std::runtime_error("Unknown symbol");
 		}
@@ -79,5 +88,5 @@ Token Lexer::extract_operator() {
 	return token;
 }
 
-const std::string Lexer::metachars = "+-*/^";
-const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", };
+const std::string Lexer::metachars = "+-*/^=!";
+const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", "==", "!=", "+=", "-=", "!"};
