@@ -8,7 +8,7 @@
 
 class Parser {
 public:
-    Parser(const std::vector<Token>&);
+    Parser(const std::vector<Token>&);//конструктор копирования
     node parse();
 private:
     node parse_binary_expression(int);
