@@ -16,6 +16,8 @@ private:
 
     static const std::string metachars;
     static const std::unordered_set<std::string> operators;
+    static const std::unordered_set<std::string> keyWords;
+    static const std::unordered_ste<std::string> varTypes;
 
     std::string input;
     std::size_t offset;

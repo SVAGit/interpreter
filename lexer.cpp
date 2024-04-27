@@ -25,9 +25,18 @@ std::vector<Token> Lexer::tokenize() {
 		} else if (input[offset] == ')') {
 			offset++;
 			tokens.push_back(Token{TokenType::RPAREN, ")"});
+		} else if (input[offset] == '{') {
+			offset++;
+			tokens.push_back(Token{TokenType::LBRACE, "("});
+		} else if (input[offset] == '}') {
+			offset++;
+			tokens.push_back(Token{TokenType::RBRACE, ")"});
 		} else if (input[offset] == ',') {
 			offset++;
 			tokens.push_back(Token{TokenType::COMMA, ","});
+		} else if (input[offset] == ';') {
+			offset++;
+			tokens.push_back(Token{TokenType::SEMICOLON, ","});
 		} else {
 			throw std::runtime_error("Unknown symbol");
 		}
@@ -38,8 +47,17 @@ std::vector<Token> Lexer::tokenize() {
 
 Token Lexer::extract_identifier() {
 	std::size_t i = 0;
-	for (; std::isalnum(input[offset + i]) || input[offset + i] == '_'; ++i);
-	Token token{TokenType::IDENTIFIER, std::string(input, offset, i)};
+	std::string op;
+	for (; std::isalnum(input[offset + i]) || input[offset + i] == '_'; ++i){
+		op += input[offset + i];
+	}
+	if(keyWords.contains(op)){
+		Token token{TokenType::KEYWORDS, std::string(input, offset, i)};
+	}else if(varType.contains(op)){
+		Token token{TokenType::VARTYPE, std::string(input, offset, i)};
+	}else{
+		Token token{TokenType::IDENTIFIER, std::string(input, offset, i)};
+	}
 	offset += i;
 	return token;
 }
@@ -79,5 +97,7 @@ Token Lexer::extract_operator() {
 	return token;
 }
 
-const std::string Lexer::metachars = "+-*/^";
-const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", };
+const std::string Lexer::metachars = "+-*/^=!";
+const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", "==", "!=", "+=", "-=", "!"};
+const std::unordered_set<std::string> Lexer::keyWords = {"if", "while", "for"};
+const std::unordered_set<std::string> Lexer::varTypes = { "int", "char", "float", "double"};
