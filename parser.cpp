@@ -16,7 +16,7 @@ node Parser::parse_binary_expression(int min_precedence) {
 	auto lhs = parse_base_expression();
 
 	for (auto op = tokens[offset].value; operators.contains(op) && operators.at(op) >= min_precedence; op = tokens[offset].value) {
-		++offset;
+		offset++;
 		auto rhs = parse_binary_expression(operators.at(op));
 		lhs = std::make_shared<BinaryNode>(op, lhs, rhs);
 	}
@@ -33,7 +33,7 @@ node Parser::parse_base_expression() {
 			return std::make_shared<IdentifierNode>(identifier);
 		}
 	} else if (tokens[offset] == "+" || tokens[offset] == "-") {
-		++offset;
+		offset++;
 		return std::make_shared<UnaryNode>(tokens[offset].value, parse_base_expression());
 	} else if (match(TokenType::LPAREN)) {
 		return parse_parenthesized_expression();

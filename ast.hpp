@@ -62,3 +62,19 @@ struct ParenthesizedNode : public ASTNode {
 	ParenthesizedNode(const node& expr) : expr(expr) {}
 	void accept(Visitor&);
 };
+
+struct VarDeclaration : public ASTNode {
+	std::string type;
+	IdentifierNode name;
+}
+
+struct FuncDeclaration : public ASTNode {
+	std::string retVal;
+	IdentifierNode name;
+	node argList;
+	node body;
+}
+
+struct body : public ASTNode {
+	vector<CommandList> commands;
+}
