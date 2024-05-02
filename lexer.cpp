@@ -27,16 +27,16 @@ std::vector<Token> Lexer::tokenize() {
 			tokens.push_back(Token{TokenType::RPAREN, ")"});
 		} else if (input[offset] == '{') {
 			offset++;
-			tokens.push_back(Token{TokenType::LBRACE, "("});
+			tokens.push_back(Token{TokenType::LBRACE, "{"});
 		} else if (input[offset] == '}') {
 			offset++;
-			tokens.push_back(Token{TokenType::RBRACE, ")"});
+			tokens.push_back(Token{TokenType::RBRACE, "}"});
 		} else if (input[offset] == ',') {
 			offset++;
 			tokens.push_back(Token{TokenType::COMMA, ","});
 		} else if (input[offset] == ';') {
 			offset++;
-			tokens.push_back(Token{TokenType::SEMICOLON, ","});
+			tokens.push_back(Token{TokenType::SEMICOLON, ";"});
 		} else {
 			throw std::runtime_error("Unknown symbol");
 		}
@@ -99,5 +99,5 @@ Token Lexer::extract_operator() {
 
 const std::string Lexer::metachars = "+-*/^=!";
 const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", "==", "!=", "+=", "-=", "!"};
-const std::unordered_set<std::string> Lexer::keyWords = {"if", "while", "for"};
-const std::unordered_set<std::string> Lexer::varTypes = { "int", "char", "float", "double"};
+const std::unordered_set<std::string> Lexer::keyWords = {"if", "while", "for", "return", "break", "continue", "true", "false", "main"};
+const std::unordered_set<std::string> Lexer::varTypes = { "int", "char", "float", "double", "bool"};

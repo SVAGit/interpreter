@@ -11,10 +11,10 @@ public:
     Parser(const std::vector<Token>&);//конструктор копирования
     node parse();
 private:
-    node parse_binary_expression(int);
-    node parse_base_expression();
-    node parse_parenthesized_expression();
-    std::vector<node> parse_function_interior();
+    expr parse_binary_expression(int);
+    expr parse_base_expression();
+    expr parse_parenthesized_expression();
+    std::vector<expr> parse_function_interior();
 
     bool match(TokenType) const;//проверяет на соответсвие текущий токен из последовательности с токеном указанным в скобках
     std::string extract(TokenType);//возвращает значение текущего токена, если тип указанный в скобках совпал
