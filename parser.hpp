@@ -14,7 +14,7 @@ private:
     std::vector<std::shared_ptr<VarDefinition>> parse_param_list();
     statement parse_decl_statement();
     statement parse_statement();
-    std::vector<statement> parse_block_statement();
+    statement parse_block_statement();
     std::shared_ptr<JumpStatement> parse_jump_statement();
     std::shared_ptr<ForLoopStatement> parse_for_statement();
     std::shared_ptr<VarDefinition> parse_arg();

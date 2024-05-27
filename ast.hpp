@@ -45,10 +45,9 @@ struct FuncDefinition : public Declaration {
 	std::string returnType;
 	std::string funcName;
 	std::vector<std::shared_ptr<VarDefinition>> argsList;
-	std::vector<statement> commandsList; 
-	//std::shared_ptr<BlockStatement> body;
+	statement commandsList;
 
-	FuncDefinition(const std::string& returnType, const std::string& funcName, std::vector<std::shared_ptr<VarDefinition>> argsList, std::vector<statement> commandList)
+	FuncDefinition(const std::string& returnType, const std::string& funcName, std::vector<std::shared_ptr<VarDefinition>> argsList, statement commandList)
 		: returnType(returnType), funcName(funcName), argsList(argsList), commandsList(commandsList) {}
 	void accept(Visitor&);
 };
@@ -56,6 +55,9 @@ struct FuncDefinition : public Declaration {
 /////////////////////////////////////////////////////////////////STATEMENT/////////////////////////////////////////////////////////////////////
 struct BlockStatement : public Statement {
 	std::vector<statement> instructions;
+
+	BlockStatement(const std::vector<statement>& instructions) : instructions(instructions) {}
+	void accept(Visitor&);
 };
 
 struct ExprStatement : public Statement {
@@ -67,11 +69,11 @@ struct ExprStatement : public Statement {
 
 struct CondStatement : public Statement {
 	expr condition;
-	std::vector<statement> if_instruction;
-	std::vector<statement> else_instruction;
+	statement if_instruction;
+	statement else_instruction;
 
-	CondStatement(const expr& condition, const std::vector<statement>& if_instruction, const std::vector<statement>& else_instruction) : condition(condition), if_instruction(if_instruction), else_instruction(else_instruction) {}
-	CondStatement(const expr& condition, const std::vector<statement>& if_instruction) : condition(condition), if_instruction(if_instruction) {}
+	CondStatement(const expr& condition, const statement& if_instruction, const statement& else_instruction) : condition(condition), if_instruction(if_instruction), else_instruction(else_instruction) {}
+	CondStatement(const expr& condition, const statement& if_instruction) : condition(condition), if_instruction(if_instruction) {}
 	void accept(Visitor&);
 };
 
@@ -87,9 +89,9 @@ struct ForLoopStatement : public Statement {
 
 struct WhileLoopStatement : public Statement {
 	expr condition;
-	std::vector<statement> instructions;
+	statement instructions;
 
-	WhileLoopStatement(const expr& condition, const std::vector<statement>& instructions) : condition(condition), instructions(instructions) {}
+	WhileLoopStatement(const expr& condition, const statement& instructions) : condition(condition), instructions(instructions) {}
 	void accept(Visitor&);
 };
 

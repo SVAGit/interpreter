@@ -51,7 +51,7 @@ std::shared_ptr<VarDefinition> Parser::parse_arg(){
 	return make_shared<VarDefinition>(extract(TokenType::VARTYPE), extract(TokenType::IDENTIFIER), nullptr);
 }
 
-std::vector<statement> Parser::parse_block_statement(){
+statement Parser::parse_block_statement(){
 	extract(TokenType::LBRACE);
 	std::vector<statement> commands;
 	if (!match(TokenType::RBRACE)) {
@@ -65,7 +65,7 @@ std::vector<statement> Parser::parse_block_statement(){
 	}else {
 		extract(TokenType::RBRACE);
 	}
-	return commands;
+	return make_shared<BlockStatement>(commands);
 }
 
 statement Parser::parse_statement(){
@@ -76,7 +76,7 @@ statement Parser::parse_statement(){
 		if(tokens[offset].value == "else"){
 			offset++;
 			if(tokens[offset].value == "if"){
-				auto value = parse_statement();
+				return make_shared<CondStatement>(expr, if_statement, parse_statement());
 			}else if(tokens[offset].value == "{"){
 				return make_shared<CondStatement>(expr, if_statement, parse_block_statement());
 			}else{
@@ -169,7 +169,7 @@ std::shared_ptr<JumpStatement> Parser::parse_jump_statement(){
 			}
 		}
 	}
-	std::vector<statement> instructions = parse_block_statement();
+	statement instructions = parse_block_statement();
 	return make_shared<ForLoopStatement>(preInstructions, condition, postInstructions, instructions);
 }
  */
