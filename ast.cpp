@@ -23,3 +23,31 @@ void IdentifierNode::accept(Visitor& visitor) {
 void ParenthesizedNode::accept(Visitor& visitor) {
     visitor.visit(*this);
 }
+
+void VarDefinition::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}
+
+void FuncDefinition::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}
+
+void ExprStatement::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}
+
+void CondStatement::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}
+
+void ForLoopStatement::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}
+
+void WhileLoopStatement::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}
+
+void JumpStatement::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}

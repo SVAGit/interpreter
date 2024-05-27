@@ -52,14 +52,18 @@ Token Lexer::extract_identifier() {
 		op += input[offset + i];
 	}
 	if(keyWords.contains(op)){
-		Token token{TokenType::KEYWORDS, std::string(input, offset, i)};
-	}else if(varType.contains(op)){
+		Token token{TokenType::KEYWORD, std::string(input, offset, i)};
+		offset += i;
+	return token;
+	}else if(varTypes.contains(op)){
 		Token token{TokenType::VARTYPE, std::string(input, offset, i)};
+		offset += i;
+	return token;
 	}else{
 		Token token{TokenType::IDENTIFIER, std::string(input, offset, i)};
-	}
-	offset += i;
+		offset += i;
 	return token;
+	}
 }
 
 Token Lexer::extract_number() {
@@ -98,6 +102,6 @@ Token Lexer::extract_operator() {
 }
 
 const std::string Lexer::metachars = "+-*/^=!";
-const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", "==", "!=", "+=", "-=", "!"};
+const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", "==", "!=", "+=", "-=", "!", "++", "--"};
 const std::unordered_set<std::string> Lexer::keyWords = {"if", "while", "for", "return", "break", "continue", "true", "false", "main"};
 const std::unordered_set<std::string> Lexer::varTypes = { "int", "char", "float", "double", "bool"};

@@ -1,7 +1,8 @@
 #pragma once
+
 #include <string>
 #include <vector>
-#include <memory>              
+#include <memory> 
 
 class Visitor;
 
@@ -13,24 +14,23 @@ struct ASTNode {
 struct Expression : public ASTNode {
 	virtual void accept(Visitor&) = 0;
 	virtual ~Expression() = default;
-}
+};
 
 struct Declaration : public ASTNode {
 	virtual void accept(Visitor&) = 0;
-	virtual ~Expression() = default;
-}
+	virtual ~Declaration() = default;
+};
 
 struct Statement : public ASTNode {
 	virtual void accept(Visitor&) = 0;
-	virtual ~Expression() = default;
-}
+	virtual ~Statement() = default;
+};
 
 using node = std::shared_ptr<ASTNode>;
 using expr = std::shared_ptr<Expression>;
 using statement = std::shared_ptr<Statement>;
 
 /////////////////////////////////////////////////////////////////DECLARATION/////////////////////////////////////////////////////////////////////////
-
 struct VarDefinition : public Declaration {
 	std::string type;
 	std::string name;
@@ -39,95 +39,124 @@ struct VarDefinition : public Declaration {
 	VarDefinition(const std::string& type, const std::string& name, expr value)
 		: type(type), name(name), value(value) {}
 	void accept(Visitor&);
-}
+};
 
 struct FuncDefinition : public Declaration {
 	std::string returnType;
 	std::string funcName;
 	std::vector<std::shared_ptr<VarDefinition>> argsList;
 	std::vector<statement> commandsList; 
+	//std::shared_ptr<BlockStatement> body;
 
-	FuncDefinition(const std::string& returnType, const std::string& funcName, vector<std::shared_ptr<VarDefinition>> argsList, std::vector<statement> commandList)
+	FuncDefinition(const std::string& returnType, const std::string& funcName, std::vector<std::shared_ptr<VarDefinition>> argsList, std::vector<statement> commandList)
 		: returnType(returnType), funcName(funcName), argsList(argsList), commandsList(commandsList) {}
 	void accept(Visitor&);
-}
+};
 
 /////////////////////////////////////////////////////////////////STATEMENT/////////////////////////////////////////////////////////////////////
+struct BlockStatement : public Statement {
+	std::vector<statement> instructions;
+};
 
 struct ExprStatement : public Statement {
 	expr expression;
 
 	ExprStatement(const expr& expression) : expression(expression) {}
 	void accept(Visitor&);
-}
+};
 
 struct CondStatement : public Statement {
 	expr condition;
-	std::vector<statement> instruction;
+	std::vector<statement> if_instruction;
+	std::vector<statement> else_instruction;
 
-	CondStatement(const expr& condition, const std::vector<statement>& instruction) : condition(condition), instruction(instruction) {}
+	CondStatement(const expr& condition, const std::vector<statement>& if_instruction, const std::vector<statement>& else_instruction) : condition(condition), if_instruction(if_instruction), else_instruction(else_instruction) {}
+	CondStatement(const expr& condition, const std::vector<statement>& if_instruction) : condition(condition), if_instruction(if_instruction) {}
 	void accept(Visitor&);
-}
+};
 
 struct ForLoopStatement : public Statement {
-	std::vector<statement> preInstructions;
-	expr conditoin;
-	std::vector<statement> postInstructions;
-	std::vector<statement> instructions;
+	std::vector<std::shared_ptr<VarDefinition>> preInstructions;
+	expr condition, postInstructions;
+	statement instructions;
 
-	ForLoopStatement(const std::vector<statement>& preInstructions, const expr& condition, const std::vector<statement>& postInstructions, const std::vector<statement>& instructions)
+	ForLoopStatement(const std::vector<std::shared_ptr<VarDefinition>>& preInstructions, const expr& condition, const expr& postInstructions, const statement& instructions)
 		: preInstructions(preInstructions), condition(condition), postInstructions(postInstructions), instructions(instructions) {}
 	void accept(Visitor&);
-}
+};
 
 struct WhileLoopStatement : public Statement {
 	expr condition;
-	std::vector<statment> instructions;
+	std::vector<statement> instructions;
 
-	WhileLoopStatement(const expr& condition, const std::vector<statement>& instructions) : condition(condition), instruction(instruction) {}
-	void accept(Visitior&);
-}
+	WhileLoopStatement(const expr& condition, const std::vector<statement>& instructions) : condition(condition), instructions(instructions) {}
+	void accept(Visitor&);
+};
 
 struct JumpStatement : public Statement {
 	std::string jumpName;
-	statement instruction;
+	expr instructions;
 
-	JumpStatemnt(const std::stirng& jumpName, const statement& instruction) : jumpName(jumpName), insturction(instruction) {}
+	JumpStatement(const std::string& jumpName, const expr& instructions) : jumpName(jumpName), instructions(instructions) {}
 	void accept(Visitor&);
-}
+};
 
-/* struct DeclStatement : public Statement {
-	std::vector<std::shared_ptr<VarDefinition>> vars;
+struct VarDeclStatement : public Statement {
+	std::shared_ptr<VarDefinition> var;
 
-	DeclStatement(const std::vector<std::shared_ptr<VarDefinition>>& vars) : vars(vars) {}
+	VarDeclStatement(const std::shared_ptr<VarDefinition>& var) : var(var) {}
 	void accept(Visitor&);
-} */
+};
 
+struct FuncDeclStatement : public Statement {
+	std::shared_ptr<FuncDefinition> func;
+
+	FuncDeclStatement(const std::shared_ptr<FuncDefinition>& func) : func(func) {}
+	void accept(Visitor&);
+};
 /////////////////////////////////////////////////////////EXPRESSION//////////////////////////////////////////////////////////
 
 struct BinaryNode : public Expression {
 	std::string op;
-	node left_branch, right_branch;
+	expr left_branch, right_branch;
 
-	BinaryNode(const std::string& op, const node& left_branch, const node& right_branch)
+	BinaryNode(const std::string& op, const expr& left_branch, const expr& right_branch)
 		: op(op), left_branch(left_branch), right_branch(right_branch) {}
+	void accept(Visitor&);
+};
+
+struct PostfixNode : public Expression {
+	std::string op;
+	expr branch;
+
+	PostfixNode(const std::string& op, const expr& branch)
+		: op(op), branch(branch) {}
+	void accept(Visitor&);
+};
+
+struct PrefixNode : public Expression {
+	std::string op;
+	expr branch;
+
+	PrefixNode(const std::string& op, const expr& branch)
+		: op(op), branch(branch) {}
 	void accept(Visitor&);
 };
 
 struct UnaryNode : public Expression {
 	std::string op;
-	node branch;
+	expr branch;
 
-	UnaryNode(const std::string& op, const node& branch)
+	UnaryNode(const std::string& op, const expr& branch)
 		: op(op), branch(branch) {}
 	void accept(Visitor&);
 };
 
-struct FunctionNode : public ASTNode {
+struct FunctionNode : public Expression {
 	std::string name;
-	std::vector<node> branches;
+	std::vector<expr> branches;
 
-	FunctionNode(const std::string& name, const std::vector<node>& branches)
+	FunctionNode(const std::string& name, const std::vector<expr>& branches)
 		: name(name), branches(branches) {}
 
 	void accept(Visitor&);
@@ -150,8 +179,8 @@ struct IdentifierNode : public Expression{
 };
 
 struct ParenthesizedNode : public Expression {
-	node expr;
+	expr expression;
 
-	ParenthesizedNode(const node& expr) : expr(expr) {}
+	ParenthesizedNode(const expr& expression) : expression(expression) {}
 	void accept(Visitor&);
 };

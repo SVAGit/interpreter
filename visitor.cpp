@@ -118,7 +118,7 @@ const std::unordered_map<std::string, std::function<double(const std::vector<dou
     {"ln", [](const std::vector<double>& x)->double {return std::log(x.front());}},
 };
 
-///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////func_dict
 
 Differentiator::Differentiator(const std::string& var) : var(var) {}
 
@@ -197,7 +197,7 @@ void Differentiator::visit(NumberNode&) {
 
 //////////////////////////////////////////////////
 
-std::pair<var_set, func_dict> Analyzer::analyze(const node& root) {
+/* std::pair<var_set, func_dict> Analyzer::analyze(const node& root) {
     root -> accept(*this);
     return std::make_pair(vars, custom_funcs);
 }
@@ -229,4 +229,4 @@ void Analyzer::visit(NumberNode&){
 }
 void Analyzer::visit(ParenthesizedNode& root){
     root.expr->accept(*this);
-}
+} */
