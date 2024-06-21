@@ -1,7 +1,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
-
+#include <iostream>
 #include "parser.hpp"
 
 #define MIN_PRECEDENCE 0
@@ -14,10 +14,6 @@ std::vector<statement> Parser::parse() {
 		declList.push_back(parse_decl_statement());
 	}
 	return declList;
-}
-
-std::shared_ptr<FuncDefinition> Parser::parse_function_definition(){
-	return make_shared<FuncDefinition>(parse_var_type(), parse_identifier(), parse_param_list(), parse_block_statement());
 }
 
 std::string Parser::parse_var_type(){
@@ -48,13 +44,15 @@ std::vector<std::shared_ptr<VarDefinition>> Parser::parse_param_list(){
 }
 
 std::shared_ptr<VarDefinition> Parser::parse_arg(){
-	return make_shared<VarDefinition>(extract(TokenType::VARTYPE), extract(TokenType::IDENTIFIER), nullptr);
+	auto type = extract(TokenType::VARTYPE);
+	auto name = extract(TokenType::IDENTIFIER);
+	return make_shared<VarDefinition>(type, name, nullptr);
 }
 
 statement Parser::parse_block_statement(){
 	extract(TokenType::LBRACE);
-	std::vector<statement> commands;
 	if (!match(TokenType::RBRACE)) {
+		std::vector<statement> commands;
 		while (true) {
 			commands.push_back(parse_statement());
 			if (match(TokenType::RBRACE)) {
@@ -62,10 +60,11 @@ statement Parser::parse_block_statement(){
 				break;
 			}
 		}
+		return make_shared<BlockStatement>(commands);
 	}else {
 		extract(TokenType::RBRACE);
+		return nullptr;
 	}
-	return make_shared<BlockStatement>(commands);
 }
 
 statement Parser::parse_statement(){
@@ -94,7 +93,7 @@ statement Parser::parse_statement(){
 		return parse_for_statement(); */
 	}else if(tokens[offset].type == TokenType::VARTYPE){
 		return parse_decl_statement();
-	}else if(tokens[offset].value == "break" || tokens[offset].value == "continue", tokens[offset].value == "return"){
+	}else if(tokens[offset].value == "break" || tokens[offset].value == "continue" || tokens[offset].value == "return"){
 		return parse_jump_statement();
 	}
 
@@ -105,7 +104,9 @@ statement Parser::parse_decl_statement(){
 	std::string type = extract(TokenType::VARTYPE);
 	std::string name = extract(TokenType::IDENTIFIER);
 	if(tokens[offset].type == TokenType::LPAREN){
-		auto funcDefinition = std::make_shared<FuncDefinition>(type, name, parse_param_list(), parse_block_statement());
+		auto params = parse_param_list();
+		auto statements = parse_block_statement();
+		auto funcDefinition = std::make_shared<FuncDefinition>(type, name, params, statements);
 		return std::make_shared<FuncDeclStatement>(funcDefinition);
 	}else{
 		auto varDefinition = std::make_shared<VarDefinition>(type, name, parse_var_value());
@@ -128,9 +129,14 @@ expr Parser::parse_var_value(){
 
 expr Parser::parse_cond_statement(){
 	extract(TokenType::LPAREN);
-	expr retVal = parse_binary_expression(MIN_PRECEDENCE);
-	extract(TokenType::RPAREN);
-	return retVal;
+	if(!match(TokenType::RPAREN)){
+		expr retVal = parse_binary_expression(MIN_PRECEDENCE);
+		extract(TokenType::RPAREN);
+		return retVal;
+	}else{
+		extract(TokenType::RPAREN);
+		return nullptr;
+	}
 }
 
 std::shared_ptr<JumpStatement> Parser::parse_jump_statement(){
@@ -139,9 +145,14 @@ std::shared_ptr<JumpStatement> Parser::parse_jump_statement(){
 		extract(TokenType::SEMICOLON);
 		return make_shared<JumpStatement>(val, nullptr);
 	}else{
-		auto expr = parse_binary_expression(MIN_PRECEDENCE);
-		extract(TokenType::SEMICOLON);
-		return make_shared<JumpStatement>(val, expr);
+		if(match(TokenType::SEMICOLON)){
+			extract(TokenType::SEMICOLON);
+			return make_shared<JumpStatement>(val, nullptr);
+		}else{
+			auto expr = parse_binary_expression(MIN_PRECEDENCE);
+			extract(TokenType::SEMICOLON);
+			return make_shared<JumpStatement>(val, expr);
+		}
 	}
 }
 
@@ -194,17 +205,18 @@ expr Parser::parse_base_expression() {
 	if (match(TokenType::NUMBER)) {
 		return std::make_shared<NumberNode>(std::stod(extract(TokenType::NUMBER)));
 	} else if (match(TokenType::IDENTIFIER)) {
-		if (auto identifier = extract(TokenType::IDENTIFIER); match(TokenType::LPAREN)) {
+		if(auto identifier = extract(TokenType::IDENTIFIER); match(TokenType::LPAREN)) {
 			return std::make_shared<FunctionNode>(identifier, parse_function_interior());
-		} else {
+		}else if(tokens[offset] == "++" || tokens[offset] == "--"){
+			auto help = make_shared<IdentifierNode>(identifier);
+			return std::make_shared<PostfixNode>(tokens[offset++].value, help);
+		}else{
 			return std::make_shared<IdentifierNode>(identifier);
 		}
-	} else if (tokens[offset] == "+" || tokens[offset] == "-") {
-		offset++;
-		return std::make_shared<UnaryNode>(tokens[offset].value, parse_base_expression());
-	} else if (tokens[offset] == "++" || tokens[offset] == "--") {
-		offset++;
-		return std::make_shared<UnaryNode>(tokens[offset].value, parse_base_expression());
+	} else if (auto token = tokens[offset++]; token == "+" || token == "-") {
+		return std::make_shared<UnaryNode>(token.value, parse_base_expression());
+	} else if (auto token = tokens[offset++]; token == "++" || token == "--") {
+		return std::make_shared<PrefixNode>(token.value, parse_base_expression());
 	} else if (match(TokenType::LPAREN)) {
 		return parse_parenthesized_expression();
 	} else {
@@ -250,13 +262,58 @@ bool Parser::match(TokenType expected_type) const {
 
 std::string Parser::extract(TokenType expected_type) {
 	if (!match(expected_type)) {
-		throw std::runtime_error("Unexpected token " + tokens[offset].value);
+		std::cout << "Ожидаемый тип: " << static_cast<int>(expected_type) << " Итоговый: "<<static_cast<int>(tokens[offset].type) << std::endl;
+		throw std::runtime_error("Unexpected token " + tokens[offset].value );
 	}
 	return tokens[offset++].value;
+}
+
+void Parser::print_tokens(){
+	for(int i = 0; i < tokens.size(); i++){
+		switch(tokens[i].type){
+			case TokenType::KEYWORD :
+				std::cout << "KEYWORD ";
+				break;
+			case TokenType::VARTYPE :
+				std::cout << "VARTYPE ";
+				break;
+			case TokenType::IDENTIFIER :
+				std::cout << "IDENTIFIER ";
+				break;
+			case TokenType::NUMBER : 
+				std::cout << "NUMBER ";
+				break;
+			case TokenType::OPERATOR :
+				std::cout << "OPERATOR ";
+				break;
+			case TokenType::LPAREN :
+				std::cout << "LPAREN ";
+				break;
+			case TokenType::RPAREN :
+				std::cout << "RPAREN ";
+				break;
+			case TokenType::LBRACE :
+				std::cout << "LBRACE ";
+				break;
+			case TokenType::RBRACE :
+				std::cout << "RBRACE ";
+				break;
+			case TokenType::COMMA :
+				std::cout << "COMMA ";
+				break;
+			case TokenType::SEMICOLON :
+				std::cout << "SEMICOLON ";
+				break;
+			case TokenType::END :
+				std::cout << "END ";
+				break;
+		}
+	}
+	std::cout << std::endl;
 }
 
 const std::unordered_map<std::string, int> Parser::operators = {
 	{"+", 0}, {"-", 0},
 	{"*", 1}, {"/", 1},
-	{"^", 2}
+	{"^", 2}, {"<", 2}, {">", 2}, {"==", 2}, {"!=", 2}, {">=", 2}, {"<=", 2}
 };

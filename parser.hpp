@@ -10,6 +10,7 @@ class Parser {
 public:
     Parser(const std::vector<Token>&);
     std::vector<statement> parse();
+    void print_tokens();
 private:
     std::vector<std::shared_ptr<VarDefinition>> parse_param_list();
     statement parse_decl_statement();

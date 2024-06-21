@@ -2,10 +2,124 @@
 #include "visitor.hpp"
 #include <cmath>
 
-void Printer::print(const node& root) {
-    root->accept(*this);
-    std::cout << std::endl;
+void Printer::print(const std::vector<statement>& root){
+    for(auto i = 0; i < root.size(); i++){
+        root[i]->accept(*this);
+        std::cout << std::endl; 
+    }
 }
+
+void Printer::visit(VarDefinition& root){
+    std::cout << "VarDefinition" << std::endl;
+    std::cout << "Type: " << root.type << "\nName: " << root.name<< std::endl;
+    std::cout << "Value: ";
+    if(root.value != nullptr){
+        root.value->accept(*this);
+        std::cout << std::endl;
+    }else{
+        std::cout << "Empty" << std::endl;
+    }
+}
+
+void Printer::visit(FuncDefinition& root){
+    std::cout << "FuncDefiniton" << std::endl;
+    std::cout << "Return type: " << root.returnType << std::endl;
+    std::cout << "Function name: " << root.funcName << std::endl;
+    std::cout << "Args list: ";
+
+    if(root.argsList.size() != 0){
+        for(auto i = 0; i < root.argsList.size(); i++){
+            root.argsList[i]->accept(*this);
+        }
+    }else{
+        std::cout << "Empty" << std::endl;
+    }
+
+    std::cout << "Commands:" << std::endl;
+    if(root.commandsList != nullptr){
+        root.commandsList->accept(*this);
+    }else{
+        std::cout << "Empty" << std::endl;
+    }
+};
+
+void Printer::visit(ExprStatement& root){
+    root.expression->accept(*this);
+};
+
+void Printer::visit(CondStatement& root){
+    std::cout << "CondStatement" << std::endl;
+    std::cout << "Condition: ";
+    root.condition->accept(*this);
+    std::cout << "\nIf instruction: ";
+    if(root.if_instruction != nullptr){
+        root.if_instruction->accept(*this);
+    }else{
+        std::cout << "Empty" << std::endl;
+    }
+    std::cout << "\nElse instruction: ";
+    if(root.else_instruction != nullptr){
+        root.else_instruction->accept(*this);
+    }else{
+        std::cout << "Empty" << std::endl;
+    }
+};
+
+void Printer::visit(ForLoopStatement&){
+
+};
+
+void Printer::visit(WhileLoopStatement& root){
+    std::cout << "WhileLoopStatement" << std::endl;
+    std::cout << "Condition: ";
+    if(root.condition != nullptr){
+        root.condition->accept(*this);
+    }else{
+        std::cout << "Empty";
+    }
+    std::cout << "\nCommands: ";
+    if(root.instructions != nullptr){
+        root.instructions->accept(*this);
+    }else{
+        std::cout << "Empty" << std::endl;
+    }
+};
+
+void Printer::visit(JumpStatement& root){
+    std::cout << "JumpStatement" << std::endl;
+    std::cout << "Jump: "<< root.jumpName << std::endl;
+    std::cout << "Expression: ";
+    if(root.instructions != nullptr){
+        root.instructions->accept(*this);
+    }else{
+        std::cout << "Empty" << std::endl;
+    }
+};
+
+void Printer::visit(BlockStatement& root){
+    for(int i=0; i < root.instructions.size(); i++){
+        root.instructions[i]->accept(*this);
+    }
+};
+
+void Printer::visit(VarDeclStatement& root){
+    root.var->accept(*this);
+};
+
+void Printer::visit(FuncDeclStatement& root){
+    root.func->accept(*this);
+};
+
+void Printer::visit(PostfixNode& root){
+    std::cout << "PostfixNode\n";
+    root.branch->accept(*this);
+    std::cout << root.op << std::endl;
+};
+
+void Printer::visit(PrefixNode& root){
+    std::cout << "PrefixNode\n" << root.op;
+    root.branch->accept(*this);
+};
 
 void Printer::visit(BinaryNode& root) {
     root.left_branch->accept(*this);
@@ -39,12 +153,12 @@ void Printer::visit(NumberNode& root) {
 
 void Printer::visit(ParenthesizedNode& root) {
     std::cout << "(";
-    root.expr->accept(*this);
+    root.expression->accept(*this);
     std::cout << ")";
 }
 
 //////////////////////////////////////////////////
-
+/* 
 Evaluator::Evaluator(
     const std::unordered_map<std::string, double>& vars,
     const std::unordered_map<std::string, std::function<double(const std::vector<double>&)>>& custom_funcs
@@ -90,7 +204,7 @@ void Evaluator::visit(NumberNode& root) {
 }
 
 void Evaluator::visit(ParenthesizedNode& root) {
-    root.expr->accept(*this);
+    root.expression->accept(*this);
 }
 
 double Evaluator::evaluate(const node& root) {
@@ -118,7 +232,7 @@ const std::unordered_map<std::string, std::function<double(const std::vector<dou
     {"ln", [](const std::vector<double>& x)->double {return std::log(x.front());}},
 };
 
-///////////////////////////////////////////////////////func_dict
+///////////////////////////////////////////////////////
 
 Differentiator::Differentiator(const std::string& var) : var(var) {}
 
@@ -192,12 +306,13 @@ void Differentiator::visit(IdentifierNode& root) {
 
 void Differentiator::visit(NumberNode&) {
     current_result = std::make_shared<NumberNode>(0);
-}
+} */
 
 
 //////////////////////////////////////////////////
 
-/* std::pair<var_set, func_dict> Analyzer::analyze(const node& root) {
+std::pair<var_set, func_dict> Analyzer::expr_analyze(const node& root) {
+    scope_control = ScopeManager();
     root -> accept(*this);
     return std::make_pair(vars, custom_funcs);
 }
@@ -210,6 +325,7 @@ void Analyzer::visit(BinaryNode& root) {
 void Analyzer::visit(UnaryNode& root) {
     root.branch->accept(*this);
 }
+
 void Analyzer::visit(FunctionNode& root){
     if (custom_funcs.contains(root.name)) {
             if (root.branches.size() != (std::dynamic_pointer_cast<FunctionNode>(custom_funcs.at(root.name)))->branches.size()) {
@@ -222,11 +338,81 @@ void Analyzer::visit(FunctionNode& root){
         }
     }
 }
+
 void Analyzer::visit(IdentifierNode& root){
-    vars.insert(root.name);
+    if(!scope_control.scopes.top()->lookup(root.name)){
+        throw std::runtime_error("Unknown identifier");
+    }
+    //vars.insert(root.name);
 }
+
 void Analyzer::visit(NumberNode&){
 }
+
 void Analyzer::visit(ParenthesizedNode& root){
     root.expr->accept(*this);
-} */
+}
+
+/////////////////////////////////////////////////////
+void Analyzer::analyze(const std::vector<statement>& root){
+    scope_control.enterScope();
+    for(int i = 0; i < root.size(); i++){
+        root[i]->accept(*this);
+    }
+    scope_control.exitScope();
+}
+
+void Analyzer::visit(VarDefinition& root){
+    auto scope = scope_control.scopes.top();
+    scope->add(root.name, root);
+}
+
+void Analyzer::visit(FuncDefinition& root){
+    auto scope = scope_control.scopes.top();
+    scope->add(root.name, root);
+    scope->enterScope();
+    for(int i = 0; i < root.argsList.size(); i++){
+        root.argsList[i]->accept(*this);
+    }
+    root.commandsList->accept(*this);
+    scope->exitScope();
+}
+
+void Analyzer::visit(BlockStatement& root){
+    for(int i = 0; i < root.instructions.size(); i++){
+        root.instructions[i]->accept(*this);
+    }
+}
+
+void Analyzer::visit(ExprStatement& root){
+    root.experssion->accept(*this);
+}
+
+void Analyzer::visit(CondStatement& root){
+    auto scope = scope_control.scopes.top();
+    root.condition->accept(*this);
+    root.if_instruction->accept(*this);
+    root.else_instruction->accept(*this);
+    scope->exitScope();
+}
+
+void Analyzer::visit(ForLoopStatement& root){}
+
+void Analyzer::visit(WhileLoopStatement& root){
+    auto scope = scope_control.scopes.top();
+    root.condition->accept(*this);
+    root.istructions->accept(*this);
+    scope.exitScope();
+}
+
+void Analyzer::visit(JumpStatement& root){
+    root.instructions->accept(*this);
+}
+
+void Analyzer::visit(VarDeclStatement& root){
+    root.var->accept(*this);
+}
+
+void Analyzer::visit(FuncDeclStatement& root){
+    root.func->accept(*this);
+}

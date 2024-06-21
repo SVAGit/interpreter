@@ -47,7 +47,7 @@ struct FuncDefinition : public Declaration {
 	std::vector<std::shared_ptr<VarDefinition>> argsList;
 	statement commandsList;
 
-	FuncDefinition(const std::string& returnType, const std::string& funcName, std::vector<std::shared_ptr<VarDefinition>> argsList, statement commandList)
+	FuncDefinition(const std::string& returnType, const std::string& funcName, std::vector<std::shared_ptr<VarDefinition>> argsList, const statement& commandsList)
 		: returnType(returnType), funcName(funcName), argsList(argsList), commandsList(commandsList) {}
 	void accept(Visitor&);
 };

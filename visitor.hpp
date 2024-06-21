@@ -1,9 +1,10 @@
 #include "ast.hpp"
+#include "scope.hpp"
 #include <unordered_map>
 #include <functional>
 #include <unordered_set>
 
-//using func_dict = std::unordered_map<std::string, node>;
+using func_dict = std::unordered_map<std::string, node>;
 using var_set = std::unordered_set<std::string>;
 
 class Visitor {
@@ -21,6 +22,10 @@ public:
     virtual void visit(ForLoopStatement&) = 0;
     virtual void visit(WhileLoopStatement&) = 0;
     virtual void visit(JumpStatement&) = 0;
+    virtual void visit(BlockStatement&) = 0;
+    virtual void visit(VarDeclStatement&) = 0;
+    virtual void visit(FuncDeclStatement&) = 0;
+    virtual void visit(PostfixNode&) = 0;virtual void visit(PrefixNode&) = 0;
 };
 
 class Printer : public Visitor {
@@ -38,8 +43,13 @@ public:
     void visit(ForLoopStatement&);
     void visit(WhileLoopStatement&);
     void visit(JumpStatement&);
+    void visit(BlockStatement&);
+    void visit(VarDeclStatement&);
+    void visit(FuncDeclStatement&);
+    void visit(PostfixNode&);
+    void visit(PrefixNode&);
 
-    void print(const node&);
+    void print(const std::vector<statement>&);
 };
 
 class Evaluator : public Visitor {
@@ -98,7 +108,7 @@ private:
     node current_result;
 };
 
-/* class Analyzer : public Visitor {
+class Analyzer : public Visitor {
 public: 
 
     void visit(BinaryNode&);
@@ -115,8 +125,13 @@ public:
     void visit(WhileLoopStatement&);
     void visit(JumpStatement&);
 
-    std::pair<var_set, func_dict> analyze(const node&);
+    /* Analyzer(){
+        scope_control();
+    } */
+    std::pair<var_set, func_dict> expr_analyze(const node&);
+    void analyze(const std::vector<statement>&);
 private:
     var_set vars;
     func_dict custom_funcs;
-}; */
+    ScopeManager scope_control;
+};
