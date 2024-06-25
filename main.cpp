@@ -11,9 +11,11 @@ int main() {
 
     Lexer lexer(input);
     Parser parser(lexer.tokenize());
-    parser.print_tokens();
-    Printer printer;
-    printer.print(parser.parse());
+    //parser.print_tokens();
+    //Printer printer;
+    //printer.print(parser.parse());
+    Analyzer analyzer;
+    analyzer.analyze(parser.parse());
 
 
     //Expression expr(input);

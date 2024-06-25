@@ -5,13 +5,13 @@
 #include <memory>
 #include <stack>
 
-using SymbolTable = std::unordered_map<std::string, std::shared_ptr<Declaration>>;
+using SymbolTable = std::unordered_map<std::string, Declaration*>;
 
 class Scope {
 public:
     Scope(const std::shared_ptr<Scope> parent = nullptr) : parent(parent) {}
 
-    void add(const std::string& name, const std::shared_ptr<Declaration>& symbol) {
+    void add(const std::string& name, Declaration* symbol) {
         if(table.contains(name)) {
             throw std::runtime_error("Redeclaration of symbol " + name + ".");
         }
@@ -33,10 +33,9 @@ private:
     std::shared_ptr<Scope> parent;
 };
 
-class ScopeManager {
-private:
+struct ScopeManager {
     std::stack<std::shared_ptr<Scope>> scopes;
-public:
+
     ScopeManager() {
         scopes.push(std::make_shared<Scope>());
     }

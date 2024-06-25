@@ -25,7 +25,8 @@ public:
     virtual void visit(BlockStatement&) = 0;
     virtual void visit(VarDeclStatement&) = 0;
     virtual void visit(FuncDeclStatement&) = 0;
-    virtual void visit(PostfixNode&) = 0;virtual void visit(PrefixNode&) = 0;
+    virtual void visit(PostfixNode&) = 0;
+    virtual void visit(PrefixNode&) = 0;
 };
 
 class Printer : public Visitor {
@@ -124,10 +125,12 @@ public:
     void visit(ForLoopStatement&);
     void visit(WhileLoopStatement&);
     void visit(JumpStatement&);
-
-    /* Analyzer(){
-        scope_control();
-    } */
+    void visit(PostfixNode&);
+    void visit(PrefixNode&);
+    void visit(VarDeclStatement&);
+    void visit(FuncDeclStatement&);
+    void visit(BlockStatement&);
+    
     std::pair<var_set, func_dict> expr_analyze(const node&);
     void analyze(const std::vector<statement>&);
 private:

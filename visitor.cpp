@@ -318,6 +318,12 @@ std::pair<var_set, func_dict> Analyzer::expr_analyze(const node& root) {
 }
 
 void Analyzer::visit(BinaryNode& root) { 
+    //проверка типов
+    if(root.op == "="){
+        if(!dinamic_cast<std::shared_ptr<IdentifierNode>>(root.left_branch)){
+            throw std::runtime_error("Not lvalue on left side of =");
+        }
+    }
     root.left_branch->accept(*this);
     root.right_branch->accept(*this);
 }
@@ -350,7 +356,7 @@ void Analyzer::visit(NumberNode&){
 }
 
 void Analyzer::visit(ParenthesizedNode& root){
-    root.expr->accept(*this);
+    root.expression->accept(*this);
 }
 
 /////////////////////////////////////////////////////
@@ -364,18 +370,18 @@ void Analyzer::analyze(const std::vector<statement>& root){
 
 void Analyzer::visit(VarDefinition& root){
     auto scope = scope_control.scopes.top();
-    scope->add(root.name, root);
+    scope->add(root.name, &root);
 }
 
 void Analyzer::visit(FuncDefinition& root){
     auto scope = scope_control.scopes.top();
-    scope->add(root.name, root);
-    scope->enterScope();
+    scope->add(root.funcName, &root);
+    scope_control.enterScope();
     for(int i = 0; i < root.argsList.size(); i++){
         root.argsList[i]->accept(*this);
     }
     root.commandsList->accept(*this);
-    scope->exitScope();
+    scope_control.exitScope();
 }
 
 void Analyzer::visit(BlockStatement& root){
@@ -385,24 +391,24 @@ void Analyzer::visit(BlockStatement& root){
 }
 
 void Analyzer::visit(ExprStatement& root){
-    root.experssion->accept(*this);
+    root.expression->accept(*this);
 }
 
 void Analyzer::visit(CondStatement& root){
-    auto scope = scope_control.scopes.top();
+    scope_control.enterScope();
     root.condition->accept(*this);
     root.if_instruction->accept(*this);
     root.else_instruction->accept(*this);
-    scope->exitScope();
+    scope_control.exitScope();
 }
 
 void Analyzer::visit(ForLoopStatement& root){}
 
 void Analyzer::visit(WhileLoopStatement& root){
-    auto scope = scope_control.scopes.top();
+    scope_control.enterScope();
     root.condition->accept(*this);
-    root.istructions->accept(*this);
-    scope.exitScope();
+    root.instructions->accept(*this);
+    scope_control.exitScope();
 }
 
 void Analyzer::visit(JumpStatement& root){
@@ -415,4 +421,12 @@ void Analyzer::visit(VarDeclStatement& root){
 
 void Analyzer::visit(FuncDeclStatement& root){
     root.func->accept(*this);
+}
+
+void Analyzer::visit(PostfixNode& root){
+    root.branch->accept(*this);
+}
+
+void Analyzer::visit(PrefixNode& root){
+    root.branch->accept(*this);
 }
