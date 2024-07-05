@@ -11,7 +11,7 @@ Lexer::Lexer(const std::string& input) : input(input), offset(0) {}
 std::vector<Token> Lexer::tokenize() {
 	std::vector<Token> tokens;
 	while(input[offset]) {
-		if (std::isblank(input[offset])) {
+		if (std::isblank(input[offset]) || input[offset] == '\n') {
 			offset++;
 		} else if (std::isdigit(input[offset]) || input[offset] == '.') {
 			tokens.push_back(extract_number());
@@ -87,7 +87,7 @@ Token Lexer::extract_identifier() {
 		return token;
 	}
 }
-//Unknown symbol
+
 Token Lexer::extract_number() {
 	std::size_t i = 0;
 	for(; std::isdigit(input[offset + i]); i++);
