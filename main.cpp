@@ -11,30 +11,13 @@ int main() {
 
     Lexer lexer(input);
     Parser parser(lexer.tokenize());
-    //parser.print_tokens();
-    //Printer printer;
-    //printer.print(parser.parse());
+    parser.print_tokens();
+    auto save = parser.parse();
+    Printer printer;
+    printer.print(save);
     Analyzer analyzer;
-    analyzer.analyze(parser.parse());
-
-
-    //Expression expr(input);
-    //expr.print();
-
-    //auto value = expr.evaluate({{"x", 1}});
-    //std::cout << value << std::endl;
-
-
-    /* auto f = [](const std::vector<double>& x) -> double { 
-        return std::exp(x.front()); 
-    };
-
-    auto SymbTable = expr.analyze();
-    for (auto el : SymbTable.first) {
-        std::cout << el << std::endl;
-    }   
-    
-    std::cout << expr.evaluate({{"x", 3}}, {{"f", f}}); */
-
+    analyzer.analyze(save);
+    Executor executor;
+    executor.execute(save);
     return 0;
 }

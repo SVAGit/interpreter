@@ -15,7 +15,7 @@ std::vector<Token> Lexer::tokenize() {
 			offset++;
 		} else if (std::isdigit(input[offset]) || input[offset] == '.') {
 			tokens.push_back(extract_number());
-		} else if (std::isalpha(input[offset]) || input[offset] == '_') {
+		} else if (std::isalpha(input[offset]) || input[offset] == '_' || input[offset] == '\'') {
 			tokens.push_back(extract_identifier());
 		} else if (metachars.contains(input[offset])) {
 			tokens.push_back(extract_operator());
@@ -38,7 +38,7 @@ std::vector<Token> Lexer::tokenize() {
 			offset++;
 			tokens.push_back(Token{TokenType::SEMICOLON, ";"});
 		} else {
-			throw std::runtime_error("Unknown symbol");
+			throw std::runtime_error("Unknown symbol" + input[offset]);
 		}
 	}
 	tokens.push_back(Token{TokenType::END, ""});
@@ -48,6 +48,28 @@ std::vector<Token> Lexer::tokenize() {
 Token Lexer::extract_identifier() {
 	std::size_t i = 0;
 	std::string op;
+	if(input[offset] == '\''){
+		if(input[offset + 2] == '\''){
+			op += input[offset + 1];
+			offset += 3;
+			Token token{TokenType::CHAR_LITERAL, op};
+			return token;
+		}else{
+			throw std::runtime_error("invalid char literal");
+		}
+	}
+	/* if(input[offset] == '\"'){
+		i++;
+		for(;input[offset + i] != '\"' || offset + i < input.size(); i++){
+			op += input[offset + i];
+		}
+		if(offset + i == input.size()){
+			throw std::runtime_error("Infinity string");
+		}
+		offset += i;
+		Token token(TokenType::STRING_LITERAL, op);
+		return token;
+	} */
 	for (; std::isalnum(input[offset + i]) || input[offset + i] == '_'; ++i){
 		op += input[offset + i];
 	}
@@ -65,22 +87,26 @@ Token Lexer::extract_identifier() {
 		return token;
 	}
 }
-
+//Unknown symbol
 Token Lexer::extract_number() {
 	std::size_t i = 0;
 	for(; std::isdigit(input[offset + i]); i++);
 	auto int_len = i;
-	if (input[offset + i] == '.') {
+	if(input[offset + i] == '.') {
 		i++;
 		auto j = i;
 		for (; std::isdigit(input[offset + i]); ++i);
 		if (i - j == 0 && int_len == 0) {
 			throw std::runtime_error("Missing int and float part of number");
 		}
+		Token token{TokenType::DOUBLE_LITERAL, std::string(input, offset, i)};
+		offset += i;
+		return token;
+	}else{
+		Token token{TokenType::INT_LITERAL, std::string(input, offset, i)};
+		offset += i;
+		return token;
 	}
-	Token token{TokenType::NUMBER, std::string(input, offset, i)};
-	offset += i;
-	return token;
 }
 
 Token Lexer::extract_operator() {
@@ -104,4 +130,4 @@ Token Lexer::extract_operator() {
 const std::string Lexer::metachars = "+-*/^=!<>";
 const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", "==", "!=", "+=", "-=", "!", "++", "--", "<", ">", "<=", ">="};
 const std::unordered_set<std::string> Lexer::keyWords = {"if", "while", "for", "return", "break", "continue", "true", "false"};
-const std::unordered_set<std::string> Lexer::varTypes = { "int", "char", "float", "double", "bool"};
+const std::unordered_set<std::string> Lexer::varTypes = { "int", "char", "string", "float", "double", "bool", "void"};

@@ -202,9 +202,15 @@ expr Parser::parse_binary_expression(int min_precedence) {
 }
 
 expr Parser::parse_base_expression() {
-	if (match(TokenType::NUMBER)) {
-		return std::make_shared<NumberNode>(std::stod(extract(TokenType::NUMBER)));
-	} else if (match(TokenType::IDENTIFIER)) {
+	if (match(TokenType::INT_LITERAL)) {
+		return std::make_shared<IntNode>(std::stod(extract(TokenType::INT_LITERAL)));
+	}
+	if (match(TokenType::DOUBLE_LITERAL)) {
+		return std::make_shared<DoubleNode>(std::stod(extract(TokenType::DOUBLE_LITERAL)));
+	}
+	if (match(TokenType::CHAR_LITERAL)) {
+		return std::make_shared<CharNode>(extract(TokenType::CHAR_LITERAL));
+	}else if (match(TokenType::IDENTIFIER)) {
 		if(auto identifier = extract(TokenType::IDENTIFIER); match(TokenType::LPAREN)) {
 			return std::make_shared<FunctionNode>(identifier, parse_function_interior());
 		}else if(tokens[offset] == "++" || tokens[offset] == "--"){
@@ -212,6 +218,10 @@ expr Parser::parse_base_expression() {
 			return std::make_shared<PostfixNode>(tokens[offset++].value, help);
 		}else{
 			return std::make_shared<IdentifierNode>(identifier);
+		}
+	}else if(match(TokenType::KEYWORD)){
+		if(tokens[offset] != "false" && tokens[offset] != "true"){
+			throw std::runtime_error("Parser: Uncorrect expression");
 		}
 	} else if (auto token = tokens[offset++]; token == "+" || token == "-") {
 		return std::make_shared<UnaryNode>(token.value, parse_base_expression());
@@ -222,6 +232,7 @@ expr Parser::parse_base_expression() {
 	} else {
 		throw std::runtime_error("Syntax error - unexpected token");
 	}
+	return nullptr;
 }
 
 expr Parser::parse_parenthesized_expression() {
@@ -249,7 +260,7 @@ std::vector<expr> Parser::parse_function_interior() {
 }
 
 expr Parser::parse_identifier_or_digit(){
-	if(tokens[offset].type == TokenType::IDENTIFIER || tokens[offset].type == TokenType::NUMBER){
+	if(tokens[offset].type == TokenType::IDENTIFIER || tokens[offset].type == TokenType::INT_LITERAL || tokens[offset].type == TokenType::DOUBLE_LITERAL ||tokens[offset].type == TokenType::CHAR_LITERAL){
 		return parse_binary_expression(MIN_PRECEDENCE);
 	}else{
 		throw std::runtime_error("Not identifier or digit");
@@ -280,8 +291,14 @@ void Parser::print_tokens(){
 			case TokenType::IDENTIFIER :
 				std::cout << "IDENTIFIER ";
 				break;
-			case TokenType::NUMBER : 
-				std::cout << "NUMBER ";
+			case TokenType::INT_LITERAL : 
+				std::cout << "INT_LITERAL ";
+				break;
+			case TokenType::DOUBLE_LITERAL : 
+				std::cout << "DOUBLE_LITERAL ";
+				break;
+			case TokenType::CHAR_LITERAL : 
+				std::cout << "CHAR_LITERAL ";
 				break;
 			case TokenType::OPERATOR :
 				std::cout << "OPERATOR ";

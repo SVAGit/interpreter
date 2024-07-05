@@ -60,7 +60,15 @@ void FunctionNode::accept(Visitor& visitor) {
     visitor.visit(*this);
 }
 
-void NumberNode::accept(Visitor& visitor) {
+void IntNode::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}
+
+void DoubleNode::accept(Visitor& visitor) {
+    visitor.visit(*this);
+}
+
+void CharNode::accept(Visitor& visitor) {
     visitor.visit(*this);
 }
 

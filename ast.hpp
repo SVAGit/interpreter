@@ -35,9 +35,17 @@ struct VarDefinition : public Declaration {
 	std::string type;
 	std::string name;
 	expr value;
+	int initialisedFlag = 0;
 
 	VarDefinition(const std::string& type, const std::string& name, expr value)
 		: type(type), name(name), value(value) {}
+
+	VarDefinition(const VarDefinition& root){
+		type = root.type;
+		name = root.name;
+		value = root.value;
+		initialisedFlag = root.initialisedFlag;
+	}
 	void accept(Visitor&);
 };
 
@@ -46,9 +54,18 @@ struct FuncDefinition : public Declaration {
 	std::string funcName;
 	std::vector<std::shared_ptr<VarDefinition>> argsList;
 	statement commandsList;
+	int initialisedFlag = 0;
 
 	FuncDefinition(const std::string& returnType, const std::string& funcName, std::vector<std::shared_ptr<VarDefinition>> argsList, const statement& commandsList)
 		: returnType(returnType), funcName(funcName), argsList(argsList), commandsList(commandsList) {}
+
+	FuncDefinition(const FuncDefinition& root){
+		returnType = root.returnType;
+		funcName = root.funcName;
+		argsList = root.argsList;
+		commandsList = root.commandsList;
+		initialisedFlag = root.initialisedFlag;
+	}
 	void accept(Visitor&);
 };
 
@@ -164,10 +181,34 @@ struct FunctionNode : public Expression {
 	void accept(Visitor&);
 };
 
-struct NumberNode : public Expression {
+struct IntNode : public Expression {
+	int value;
+
+	IntNode(int value)
+		: value(value) {}
+	void accept(Visitor&);
+};
+
+struct DoubleNode : public Expression {
 	double value;
 
-	NumberNode(double value)
+	DoubleNode(double value)
+		: value(value) {}
+	void accept(Visitor&);
+};
+
+struct CharNode : public Expression {
+	char value;
+
+	CharNode(std::string value)
+		: value(value[0]) {}
+	void accept(Visitor&);
+};
+
+struct BoolNode : public Expression {
+	bool value;
+	
+	BoolNode(bool value)
 		: value(value) {}
 	void accept(Visitor&);
 };
