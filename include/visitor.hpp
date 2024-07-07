@@ -83,6 +83,7 @@ public:
     void visit(BoolNode&);
     
     void analyze(const std::vector<statement>&);
+    Type get_type(const std::string&);
     static const std::unordered_set<std::string> assignment_operations;
 private:
     ScopeManager scope_control;
@@ -96,9 +97,6 @@ private:
 
 class Executor : public Visitor{
 public:
-
-    Executor() = default;
-    using operand = std::variant<int, double, char, bool>;
 
     void visit(BinaryNode&);
     void visit(UnaryNode&);
@@ -122,23 +120,24 @@ public:
     void visit(BlockStatement&);
     void visit(BoolNode&);
 
+    using variable = std::variant<int, double, char, bool>;
+
     void execute(const std::vector<statement>&);
-    operand default_value(const Type&);
-	Type get_type(const std::string&);
+    variable default_value(Type);
+	Type get_type(std::string);
 	std::vector<std::pair<std::string, std::shared_ptr<Variable>>> get_arguments(std::vector<std::shared_ptr<VarDefinition>>);
 
 private:
-    static const std::unordered_map<std::string, std::function<void(operand&)>> builtin_funcs;
-	static const std::unordered_map<std::string, std::function<operand(operand)>> unary_operations;
-	static const std::unordered_map<std::string, std::function<operand(operand, operand)>> assignment_operations;
-    static const std::unordered_map<std::string, std::function<operand(operand, operand)>> binary_operations;
-	static const std::unordered_set<std::string> assignment_operators;
-	static const std::unordered_set<std::string> funcs;
-
     ScopeManager scope_control;
-	operand current_result;
-	std::shared_ptr<operand> var;
+	variable currRes;
+	std::shared_ptr<variable> var;
 	bool return_flag = false;
 	bool continue_flag = false;
 	bool break_flag = false;
+
+    static const std::unordered_set<std::string> assignment_operators;
+	static const std::unordered_map<std::string, std::function<variable(variable, variable)>> assignment_operations;
+    static const std::unordered_map<std::string, std::function<variable(variable)>> unary_operations;
+    static const std::unordered_map<std::string, std::function<variable(variable, variable)>> binary_operations;
+    static const std::unordered_map<std::string, std::function<void(variable&)>> builtin_funcs;
 };

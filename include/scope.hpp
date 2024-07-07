@@ -114,8 +114,9 @@ public:
             }else{
                 return table[name];
             }
+        }else{
+            return nullptr;
         }
-        return nullptr;
     }
 
     Type search_type(std::string name){

@@ -136,7 +136,7 @@ Token Lexer::extract_operator() {
 	return token;
 }
 
-const std::string Lexer::metachars = "+-*/^=!<>";
-const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", "==", "!=", "+=", "-=", "!", "++", "--", "<", ">", "<=", ">="};
+const std::string Lexer::metachars = "+-*/^=!<>|&";
+const std::unordered_set<std::string> Lexer::operators = {"+", "-", "*", "/", "^", "=", "==", "!=", "+=", "-=", "!", "++", "--", "<", ">", "<=", ">=", "||", "&&", "|", "&"};
 const std::unordered_set<std::string> Lexer::keyWords = {"if", "while", "for", "return", "break", "continue", "true", "false"};
 const std::unordered_set<std::string> Lexer::varTypes = { "int", "char", "float", "double", "bool", "void"};
