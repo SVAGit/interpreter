@@ -9,7 +9,7 @@
 #include "ast.hpp"
 
 enum class Type{
-    VOID, INT, DOUBLE, CHAR, BOOL,
+    VOID, INT, DOUBLE, CHAR, BOOL
 };
 
 using operand = std::variant<int, double, char, bool>;
@@ -57,7 +57,7 @@ public:
     }
 
     std::shared_ptr<Symbol> get_symbol(const std::string& name){
-    	if(!table.contains(name)){
+    	if(!executeTable.contains(name)){
             if(parent == nullptr){
                 return nullptr;
             }
@@ -169,8 +169,8 @@ public:
                     }else{
                         return false;
                     }
-                }else{
-                    if(varDef->initialisedFlag){
+                }else if(auto funcDef = dynamic_cast<FuncDefinition*>(table[name].get())){
+                    if(funcDef->initialisedFlag){
                         return true;
                     }else{
                         return false;

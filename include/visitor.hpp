@@ -5,9 +5,6 @@
 #include <unordered_set>
 #include <variant>
 
-using func_dict = std::unordered_map<std::string, node>;
-using var_set = std::unordered_set<std::string>;
-
 class Visitor {
 public:
     virtual void visit(BinaryNode&) = 0;
@@ -86,10 +83,12 @@ public:
     void visit(BoolNode&);
     
     void analyze(const std::vector<statement>&);
+    static const std::unordered_set<std::string> assignment_operations;
 private:
     ScopeManager scope_control;
     Type currType = Type::VOID;
     std::stack<int> loopFlag;
+    bool anotherFunc = false;
     int mainFlag = 0;
     int equalsFlag = 0;
     int lhsFlag = 0;

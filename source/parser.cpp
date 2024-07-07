@@ -44,9 +44,14 @@ std::vector<std::shared_ptr<VarDefinition>> Parser::parse_param_list(){
 }
 
 std::shared_ptr<VarDefinition> Parser::parse_arg(){
+	bool flag = false;
+	if(match(TokenType::CONST)){
+		flag = true;
+		extract(TokenType::CONST);
+	}
 	auto type = extract(TokenType::VARTYPE);
 	auto name = extract(TokenType::IDENTIFIER);
-	return make_shared<VarDefinition>(type, name, nullptr);
+	return make_shared<VarDefinition>(type, name, nullptr, flag);
 }
 
 statement Parser::parse_block_statement(){
@@ -91,7 +96,7 @@ statement Parser::parse_statement(){
 	/*} else if(tokens[offset].value == "for"){
 		offset++;
 		return parse_for_statement(); */
-	}else if(tokens[offset].type == TokenType::VARTYPE){
+	}else if(tokens[offset].type == TokenType::VARTYPE || tokens[offset].type == TokenType::CONST){
 		return parse_decl_statement();
 	}else if(tokens[offset].value == "break" || tokens[offset].value == "continue" || tokens[offset].value == "return"){
 		return parse_jump_statement();
@@ -101,15 +106,20 @@ statement Parser::parse_statement(){
 }
 
 statement Parser::parse_decl_statement(){
+	bool flag = false;
+	if(match(TokenType::CONST)){
+		flag = true;
+		extract(TokenType::CONST);
+	}
 	std::string type = extract(TokenType::VARTYPE);
 	std::string name = extract(TokenType::IDENTIFIER);
-	if(tokens[offset].type == TokenType::LPAREN){
+	if(tokens[offset].type == TokenType::LPAREN && !flag){
 		auto params = parse_param_list();
 		auto statements = parse_block_statement();
 		auto funcDefinition = std::make_shared<FuncDefinition>(type, name, params, statements);
 		return std::make_shared<FuncDeclStatement>(funcDefinition);
 	}else{
-		auto varDefinition = std::make_shared<VarDefinition>(type, name, parse_var_value());
+		auto varDefinition = std::make_shared<VarDefinition>(type, name, parse_var_value(), flag);
 		return std::make_shared<VarDeclStatement>(varDefinition);
 	}
 }
@@ -156,36 +166,9 @@ std::shared_ptr<JumpStatement> Parser::parse_jump_statement(){
 	}
 }
 
-/* std::shared_ptr<ForLoopStatement> Parser::parse_for_statement(){
-	extract(TokenType::LPAREN);
-	std::vector<statement> preInstructions;
-	expr condition;
-	std::vector<statement> postInstructions;
-	if(!match(TokenType::SEMICOLON)){
-		while(true){
-			preInstructions.push_back(parse_comma_statement());
-			if(match(TokenType::SEMICOLON)){
-				extract(TokenType::SEMICOLON);
-				break;
-			}
-		}
-	}
-	condition = parse_binary_expression(MIN_PRECEDENCE);//должна останавливаться на ;
-	if(!match(TokenType::RPAREN)){
-		while(true){
-			postInstructions.push_back(parse_comma_statement());
-			if(match(TokenType::RPAREN)){
-				extract(TokenType::RPAREN);
-				break;
-			}
-		}
-	}
-	statement instructions = parse_block_statement();
-	return make_shared<ForLoopStatement>(preInstructions, condition, postInstructions, instructions);
-}
- */
 std::shared_ptr<ExprStatement> Parser::parse_expr_statement(){
-	auto retVal = std::make_shared<ExprStatement>(parse_binary_expression(MIN_PRECEDENCE));
+	auto expr = parse_binary_expression(MIN_PRECEDENCE);
+	auto retVal = std::make_shared<ExprStatement>(expr);
 	extract(TokenType::SEMICOLON);
 	return retVal;
 }
@@ -210,7 +193,16 @@ expr Parser::parse_base_expression() {
 	}
 	if (match(TokenType::CHAR_LITERAL)) {
 		return std::make_shared<CharNode>(extract(TokenType::CHAR_LITERAL));
-	}else if (match(TokenType::IDENTIFIER)) {
+	}
+	if (match(TokenType::BOOL_LITERAL)){
+		bool value = true;
+		if(tokens[offset].value == "false"){
+			value = false;
+		}
+		extract(TokenType::BOOL_LITERAL);
+		return std::make_shared<BoolNode>(value);
+	}
+	else if (match(TokenType::IDENTIFIER)) {
 		if(auto identifier = extract(TokenType::IDENTIFIER); match(TokenType::LPAREN)) {
 			return std::make_shared<FunctionNode>(identifier, parse_function_interior());
 		}else if(tokens[offset] == "++" || tokens[offset] == "--"){
@@ -225,12 +217,15 @@ expr Parser::parse_base_expression() {
 		}
 	} else if (auto token = tokens[offset++]; token == "+" || token == "-") {
 		return std::make_shared<UnaryNode>(token.value, parse_base_expression());
-	} else if (auto token = tokens[offset++]; token == "++" || token == "--") {
-		return std::make_shared<PrefixNode>(token.value, parse_base_expression());
+	} else if (auto token = tokens[offset]; token == "++" || token == "--") {
+		extract(TokenType::OPERATOR);
+		auto identifier = extract(TokenType::IDENTIFIER);
+		auto help = std::make_shared<IdentifierNode>(identifier);
+		return std::make_shared<PrefixNode>(token.value, help);
 	} else if (match(TokenType::LPAREN)) {
 		return parse_parenthesized_expression();
 	} else {
-		throw std::runtime_error("Syntax error - unexpected token");
+		throw std::runtime_error("Syntax error - unexpected token " + tokens[offset].value);
 	}
 	return nullptr;
 }
@@ -291,6 +286,9 @@ void Parser::print_tokens(){
 			case TokenType::IDENTIFIER :
 				std::cout << "IDENTIFIER ";
 				break;
+			case TokenType::CONST :
+				std::cout << "CONST";
+				break;
 			case TokenType::INT_LITERAL : 
 				std::cout << "INT_LITERAL ";
 				break;
@@ -333,5 +331,5 @@ const std::unordered_map<std::string, int> Parser::operators = {
 	{"+", 0}, {"-", 0},
 	{"*", 1}, {"/", 1},
 	{"^", 2}, {"<", 2}, {">", 2}, {"==", 2}, {"!=", 2}, {">=", 2}, {"<=", 2},
-	{"=", 3}
+	{"=", 3}, {"+=", 3}, {"-=", 3}, {"*=", 3}, {"/=", 3}
 };

@@ -10,6 +10,9 @@ void Printer::print(const std::vector<statement>& root){
 
 void Printer::visit(VarDefinition& root){
     std::cout << "VarDefinition" << std::endl;
+    if(root.const_specifier){
+        std::cout << "Const: true" << std::endl;
+    }
     std::cout << "Type: " << root.type << "\nName: " << root.name<< std::endl;
     std::cout << "Value: ";
     if(root.value != nullptr){
@@ -43,7 +46,9 @@ void Printer::visit(FuncDefinition& root){
 };
 
 void Printer::visit(ExprStatement& root){
+    std::cout << "Expression" << std::endl;
     root.expression->accept(*this);
+    std::cout << std::endl;
 };
 
 void Printer::visit(CondStatement& root){
@@ -170,7 +175,7 @@ void Printer::visit(ParenthesizedNode& root) {
 
 //////////////////////////////////////////////////
 void Analyzer::visit(BinaryNode& root) { 
-    if(root.op == "="){
+    if(assignment_operations.contains(root.op)){
         if(equalsFlag > 0){
             throw std::runtime_error("Sintaxis error, second =");
         }
@@ -201,7 +206,20 @@ void Analyzer::visit(UnaryNode& root) {
 }
 
 void Analyzer::visit(PrefixNode& root) {
-    root.branch->accept(*this);
+    if(auto id = dynamic_pointer_cast<IdentifierNode>(root.branch)){
+        auto element = scope_control.scopes.top()->get_element(id->name);
+        if(auto var = dynamic_pointer_cast<VarDefinition>(element)){
+            if(var->const_specifier){
+                throw std::runtime_error(var->name + " is const");
+            }else{
+                root.branch->accept(*this);
+            }
+        }else{
+            throw std::runtime_error("Uncorrect identifierNode");
+        }
+    }else{
+        throw std::runtime_error("Uncorrect prefix operand");
+    }
     if(currType == Type::CHAR || currType == Type::BOOL || currType == Type::VOID){
         throw std::runtime_error("Uncorrect prefix operation");
     }
@@ -209,6 +227,18 @@ void Analyzer::visit(PrefixNode& root) {
 
 void Analyzer::visit(PostfixNode& root) {
     root.branch->accept(*this);
+    if(auto id = dynamic_pointer_cast<IdentifierNode>(root.branch)){
+        auto element = scope_control.scopes.top()->get_element(id->name);
+        if(auto var = dynamic_pointer_cast<VarDefinition>(element)){
+            if(var->const_specifier){
+                throw std::runtime_error(var->name + " is const");
+            }
+        }else{
+            throw std::runtime_error("Uncorrect identifierNode");
+        }
+    }else{
+        throw std::runtime_error("Uncorrect postfix operand");
+    }
     if(currType == Type::CHAR || currType == Type::BOOL || currType == Type::VOID){
         throw std::runtime_error("Uncorrect postfix operation");
     }
@@ -223,13 +253,16 @@ void Analyzer::visit(IdentifierNode& root){
     if(lhsFlag && equalsFlag){
         auto obj = scope_control.scopes.top()->get_element(root.name);
         if(auto get = dynamic_cast<VarDefinition*>(obj.get())){
+            if(get->const_specifier){
+                throw std::runtime_error("Const variable " + get->name);
+            }
             (get->initialisedFlag)++;
         }
         if(auto get = dynamic_cast<FuncDefinition*>(obj.get())){
             (get->initialisedFlag)++;
         }
     }else{
-        if(!scope_control.scopes.top()->cheak_init(root.name)){
+        if(!scope_control.scopes.top()->cheak_init(root.name) && mainFlag){
             throw std::runtime_error(root.name + " not initialized");
         }
     }
@@ -277,22 +310,22 @@ void Analyzer::visit(VarDefinition& root){
         switch(currType){
             case Type::INT :
                 if(root.type != "int"){
-                    throw std::runtime_error("Retruned not int");
+                    throw std::runtime_error("Variable not int");
                 }
                 break;
             case Type::DOUBLE :
                 if(root.type != "double"){
-                    throw std::runtime_error("Retruned not double");
+                    throw std::runtime_error("Variable not double");
                 }
                 break;
             case Type::CHAR :
                 if(root.type != "char"){
-                    throw std::runtime_error("Retruned not char");
+                    throw std::runtime_error("Variable not char");
                 }
                 break;
             case Type::BOOL :
                 if(root.type != "bool"){
-                    throw std::runtime_error("Retruned not bool");
+                    throw std::runtime_error("Variable not bool");
                 }
                 break;
         }
@@ -419,3 +452,5 @@ void Analyzer::visit(VarDeclStatement& root){
 void Analyzer::visit(FuncDeclStatement& root){
     root.func->accept(*this);
 }
+
+const std::unordered_set<std::string> Analyzer::assignment_operations = {"=", "+=", "-=", "*=", "/="};

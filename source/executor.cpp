@@ -33,9 +33,9 @@ void Executor::execute(const std::vector<statement>& root){
     scope_control.enterScope();
     for(int i = 0; i < root.size(); i++){
         root[i]->accept(*this);
-        if(scope_control.scopes.top()->executeLookup("main")){
+        /* if(scope_control.scopes.top()->executeLookup("main")){
             break;
-        }
+        } */
     }
     scope_control.exitScope();
 }
@@ -87,7 +87,7 @@ void Executor::visit(PrefixNode& root){
 		current_result = unary_operations.at(root.op)(result);
 	}
 }
-//add
+
 void Executor::visit(FunctionNode& root){
     if(funcs.contains(root.name)){
         if(root.name == "print"){
@@ -104,14 +104,21 @@ void Executor::visit(FunctionNode& root){
         return;
     }
     scope_control.enterScope();
-    auto func = std::dynamic_pointer_cast<Function>(scope_control.scopes.top()->get_symbol(root.name));
-    for(std::size_t i = 0; i != root.branches.size(); i++){
-        root.branches[i]->accept(*this);
-        scope_control.scopes.top()->executorAdd(func->arguments[i].first, std::make_shared<Variable>(func->arguments[i].second->type, std::make_shared<operand>(current_result)));
-    }
-    func->body->accept(*this);
-    return_flag = false;
-    scope_control.exitScope();
+	if(auto func = std::dynamic_pointer_cast<Function>(scope_control.scopes.top()->get_symbol(root.name)); !func){
+		throw std::runtime_error("func");
+	}else{
+		for(std::size_t i = 0; i != root.branches.size(); i++){
+			root.branches[i]->accept(*this);
+			auto name = func->arguments[i].first;
+			auto type = func->arguments[i].second->type;
+			auto value = std::make_shared<operand>(current_result);
+			auto var = std::make_shared<Variable>(type, value);
+			scope_control.scopes.top()->executorAdd(name, var);
+		}
+		func->body->accept(*this);
+		return_flag = false;
+		scope_control.exitScope();
+	}
 }
 
 void Executor::visit(IdentifierNode& root){

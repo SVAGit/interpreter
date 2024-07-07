@@ -35,15 +35,17 @@ struct VarDefinition : public Declaration {
 	std::string type;
 	std::string name;
 	expr value;
+	bool const_specifier;
 	int initialisedFlag = 0;
 
-	VarDefinition(const std::string& type, const std::string& name, expr value)
-		: type(type), name(name), value(value) {}
+	VarDefinition(const std::string& type, const std::string& name, expr value, bool const_specifier = false)
+		: type(type), name(name), value(value) , const_specifier(const_specifier) {}
 
 	VarDefinition(const VarDefinition& root){
 		type = root.type;
 		name = root.name;
 		value = root.value;
+		const_specifier = root.const_specifier;
 		initialisedFlag = root.initialisedFlag;
 	}
 	void accept(Visitor&);

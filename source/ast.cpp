@@ -72,6 +72,10 @@ void CharNode::accept(Visitor& visitor) {
     visitor.visit(*this);
 }
 
+void BoolNode::accept(Visitor& visitor){
+    visitor.visit(*this);
+}
+
 void IdentifierNode::accept(Visitor& visitor) {
     visitor.visit(*this);
 }
